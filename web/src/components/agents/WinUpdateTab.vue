@@ -103,10 +103,11 @@
             </q-icon>
           </q-td>
           <q-td>{{ !props.row.severity ? "Other" : props.row.severity }}</q-td>
-          <q-td>{{ truncateText(props.row.title, 50) }}</q-td>
+          <q-td>{{ props.row.kb }}</q-td>
+          <q-td>{{ truncateText(props.row.title, 75) }}</q-td>
           <q-td @click="showUpdateDetails(props.row)">
             <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
-              truncateText(props.row.description, 50)
+              truncateText(props.row.description, 75)
             }}</span>
           </q-td>
           <q-td>{{ formatDate(props.row.date_installed) }}</q-td>
@@ -144,6 +145,13 @@ const columns = [
     name: "severity",
     label: "Severity",
     field: "severity",
+    align: "left",
+    sortable: true,
+  },
+  {
+    name: "kb",
+    label: "KB",
+    field: "kb",
     align: "left",
     sortable: true,
   },
