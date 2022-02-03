@@ -107,7 +107,7 @@
           <q-td>{{ truncateText(props.row.title, 75) }}</q-td>
           <q-td @click="showUpdateDetails(props.row)">
             <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
-              truncateText(props.row.description, 75)
+              truncateText(props.row.description, 50)
             }}</span>
           </q-td>
           <q-td>{{ formatDate(props.row.date_installed) }}</q-td>
