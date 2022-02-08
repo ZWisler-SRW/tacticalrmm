@@ -22,6 +22,33 @@
                 </q-menu>
               </q-item>
 
+              <q-item clickable>
+                <q-item-section>Settings</q-item-section>
+                <q-item-section side>
+                  <q-icon name="keyboard_arrow_right" />
+                </q-item-section>
+                <q-menu anchor="top right" self="top left">
+                  <q-list dense style="min-width: 100px">
+                    <!-- permissions manager -->
+                    <q-item clickable v-close-popup @click="showPermissionsManager">
+                      <q-item-section>Role Manager</q-item-section>
+                    </q-item>
+                    <!-- admin manager -->
+                    <q-item clickable v-close-popup @click="showAdminManager = true">
+                      <q-item-section>User Administration</q-item-section>
+                    </q-item>
+                    <!-- core settings -->
+                    <q-item clickable v-close-popup @click="showEditCoreSettingsModal = true">
+                      <q-item-section>Global Settings</q-item-section>
+                    </q-item>
+                    <!-- code sign -->
+                    <q-item v-if="!hosted" clickable v-close-popup @click="showCodeSign = true">
+                      <q-item-section>Code Signing</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-item>
+
               <q-item clickable v-close-popup @click="showAuditManager">
                 <q-item-section>Audit Log</q-item-section>
               </q-item>
@@ -58,8 +85,8 @@
           </q-menu>
         </q-btn>
 
-        <!-- settings -->
-        <q-btn size="md" dense no-caps flat label="Settings">
+        <!-- utilities -->
+        <q-btn size="md" dense no-caps flat label="Utilities">
           <q-menu auto-close>
             <q-list dense style="min-width: 100px">
               <!-- clients manager -->
@@ -74,29 +101,18 @@
               <q-item clickable v-close-popup @click="showAutomationManager">
                 <q-item-section>Automation Manager</q-item-section>
               </q-item>
+              <!-- update manager -->
+              <q-item clickable v-close-popup @click="showUpdateManager">
+                <q-item-section>Update Manager</q-item-section>
+              </q-item>
               <!-- alerts manager -->
               <q-item clickable v-close-popup @click="showAlertsManager">
                 <q-item-section>Alerts Manager</q-item-section>
               </q-item>
-              <!-- permissions manager -->
-              <q-item clickable v-close-popup @click="showPermissionsManager">
-                <q-item-section>Permissions Manager</q-item-section>
-              </q-item>
-              <!-- admin manager -->
-              <q-item clickable v-close-popup @click="showAdminManager = true">
-                <q-item-section>User Administration</q-item-section>
-              </q-item>
-              <!-- core settings -->
-              <q-item clickable v-close-popup @click="showEditCoreSettingsModal = true">
-                <q-item-section>Global Settings</q-item-section>
-              </q-item>
-              <!-- code sign -->
-              <q-item v-if="!hosted" clickable v-close-popup @click="showCodeSign = true">
-                <q-item-section>Code Signing</q-item-section>
-              </q-item>
             </q-list>
           </q-menu>
         </q-btn>
+
         <!-- tools -->
         <q-btn size="md" dense no-caps flat label="Tools">
           <q-menu auto-close>
@@ -187,6 +203,7 @@ import ClientsForm from "@/components/clients/ClientsForm";
 import SitesForm from "@/components/clients/SitesForm";
 import UpdateAgents from "@/components/modals/agents/UpdateAgents";
 import ScriptManager from "@/components/scripts/ScriptManager";
+import UpdateManager from "@/components/automation/UpdateManager";
 import EditCoreSettings from "@/components/modals/coresettings/EditCoreSettings";
 import AlertsManager from "@/components/AlertsManager";
 import AutomationManager from "@/components/automation/AutomationManager";
@@ -338,6 +355,23 @@ export default {
     showDeployments() {
       this.$q.dialog({
         component: Deployment,
+      });
+    },
+    showUpdateManager() {
+      this.$q.dialog({
+        component: DialogWrapper,
+        componentProps: {
+          vuecomponent: UpdateManager,
+          noCard: true,
+          componentProps: {
+            modal: true,
+          },
+          dialogProps: {
+            maximized: true,
+            ["transition-show"]: "slide-up",
+            ["transition-hide"]: "slide-down",
+          },
+        },
       });
     },
   },

@@ -11,8 +11,9 @@ from tacticalrmm.utils import get_default_timezone
 from tacticalrmm.permissions import _has_perm_on_agent
 
 from .models import WinUpdate
+from .models import WinUpdateManager
 from .permissions import AgentWinUpdatePerms
-from .serializers import WinUpdateSerializer
+from .serializers import WinUpdateSerializer, WinUpdateManagerSerializer
 
 
 class GetWindowsUpdates(APIView):
@@ -26,6 +27,25 @@ class GetWindowsUpdates(APIView):
         serializer = WinUpdateSerializer(updates, many=True, context=ctx)
         return Response(serializer.data)
 
+class RetrieveWindowsUpdates(APIView):
+    permission_classes = [IsAuthenticated, AgentWinUpdatePerms]
+
+    # list all windows updates that are pending
+    def get(self, request):
+        updates = WinUpdateManager.objects.all()
+        ctx = {"agents_pending": 0, "agents_installed": 0}
+        serializer = WinUpdateManagerSerializer(updates, many=True, context=ctx)
+        return Response(serializer.data)
+
+class PopulateWindowsUpdates(APIView):
+    permission_classes = [IsAuthenticated, AgentWinUpdatePerms]
+
+    # populate the windows update manager table to include the KB and report against it
+    def get(self, request):
+        updates = WinUpdateManager.objects.all()
+        ctx = {"agents_pending": 0, "agents_installed": 0}
+        serializer = WinUpdateManagerSerializer(updates, many=True, context=ctx)
+        return Response(serializer.data)
 
 class ScanWindowsUpdates(APIView):
     permission_classes = [IsAuthenticated, AgentWinUpdatePerms]

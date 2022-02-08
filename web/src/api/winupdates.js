@@ -24,3 +24,21 @@ export async function editAgentUpdate(id, payload) {
   const { data } = await axios.put(`${baseUrl}/${id}/`, payload)
   return data
 }
+
+/*
+  Begin update manager calls
+*/
+
+export async function fetchWindowsUpdates(params = {}) {
+  try {
+    const { data } = await axios.get(`${baseUrl}/retrieve`, { params: params })
+    return data
+  } catch (e) { console.error(e) }
+}
+
+export async function populateWindowsUpdates(params = {}) {
+  try {
+    const { data } = await axios.get(`${baseUrl}/populate`, { params: params })
+    return data
+  } catch (e) { console.error(e) }
+}
