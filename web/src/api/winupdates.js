@@ -36,9 +36,16 @@ export async function fetchWindowsUpdates(params = {}) {
   } catch (e) { console.error(e) }
 }
 
-export async function populateWindowsUpdates(params = {}) {
+export async function populateWindowsUpdates() {
   try {
-    const { data } = await axios.get(`${baseUrl}/populate`, { params: params })
+    const { data } = await axios.patch(`${baseUrl}/populate/`)
+    return data
+  } catch (e) { console.error(e) }
+}
+
+export async function updateAllWindowsUpdates(kb, payload) {
+  try {
+    const { data } = await axios.put(`${baseUrl}/all/${kb}/`, payload)
     return data
   } catch (e) { console.error(e) }
 }

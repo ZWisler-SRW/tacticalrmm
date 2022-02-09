@@ -1,30 +1,42 @@
 <template>
   <q-card>
     <q-bar v-if="modal">
-      <q-btn @click="getWindowsUpdates" class="q-mr-sm" dense flat push icon="refresh" />Update Manager
+      <!--<q-btn @click="getWindowsUpdates" class="q-mr-sm" dense flat push icon="refresh" />-->Update Manager
       <q-space />
       <q-btn dense flat icon="close" v-close-popup>
         <q-tooltip content-class="bg-white text-primary">Close</q-tooltip>
       </q-btn>
     </q-bar>
+
     <q-table
+      dense
       :table-class="{ 'table-bgcolor': !$q.dark.isActive, 'table-bgcolor-dark': $q.dark.isActive }"
       class="tabs-tbl-sticky"
-      :style="{ 'max-height': tabHeight ? tabHeight : `${$q.screen.height - 33}px` }"
+      :style="{ 'max-height': tabHeight }"
       :rows="windowsUpdates"
       :columns="columns"
-      :title="modal ? 'Windows Updates' : ''"
-      :pagination="{ sortBy: 'status', descending: true, rowsPerPage: 0 }"
-      :loading="loading"
+      v-model:pagination="pagination"
       :filter="filter"
-      virtual-scroll
-      dense
+      row-key="kb"
       binary-state-sort
+      virtual-scroll
+      :loading="loading"
       :rows-per-page-options="[0]"
+      no-data-label="No Windows Updates"
     >
       <template v-slot:top>
-        <!--<q-btn class="q-pr-sm" dense flat push @click="getWindowsUpdates" icon="refresh" />-->
+        <q-btn
+          label="Refresh Updates"
+          dense
+          flat
+          push
+          no-caps
+          @click="updateWindowsUpdates"
+          icon="refresh"
+          class="q-mr-sm"
+        />
         <q-space />
+
         <q-input v-model="filter" outlined label="Search" dense clearable class="q-pr-sm">
           <template v-slot:prepend>
             <q-icon name="search" color="primary" />
@@ -33,12 +45,41 @@
         <export-table-btn :data="windowsUpdates" :columns="columns" />
       </template>
 
-      <template v-slot:top-row>
-        <q-tr v-if="Array.isArray(windowsUpdates) && windowsUpdates.length === 1000">
-          <q-td colspan="100%">
-            <q-icon name="warning" color="warning" />
-            Results are limited to 1000 rows.
+      <template v-slot:loading>
+        <q-inner-loading showing color="primary" />
+      </template>
+
+      <template v-slot:body="props">
+        <q-tr :props="props">
+          <q-menu context-menu>
+            <q-list dense style="min-width: 100px">
+              <q-item clickable v-close-popup @click="editWindowsUpdate(props.row.kb, 'inherit')">
+                <q-item-section>Inherit</q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="editWindowsUpdate(props.row.kb, 'approve')">
+                <q-item-section>Approve</q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="editWindowsUpdate(props.row.kb, 'ignore')">
+                <q-item-section>Ignore</q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="editWindowsUpdate(props.row.kb, 'nothing')">
+                <q-item-section>Do Nothing</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+          <!-- policy -->
+          <q-td>
+            <span v-if="props.row.status === 'nothing'" name="fiber_manual_record" color="grey"> Do Nothing </span>
+            <span v-else-if="props.row.status === 'approve'" name="fas fa-check" color="primary"> Approve </span>
+            <span v-else-if="props.row.status === 'ignore'" name="fas fa-check" color="negative"> Ignore </span>
+            <span v-else-if="props.row.status === 'inherit'" name="fiber_manual_record" color="accent"> Inherit</span>
+            <span v-else-if="props.row.status === 'default'" name="fiber_manual_record" color="grey"> Default</span>
           </q-td>
+          <q-td>{{ !props.row.severity ? "Not Defined" : props.row.severity }}</q-td>
+          <q-td>{{ props.row.kb }}</q-td>
+          <q-td>{{ truncateText(props.row.name, 75) }}</q-td>
+          <q-td>{{ props.row.agents_pending }}</q-td>
+          <q-td>{{ props.row.agents_installed }}</q-td>
         </q-tr>
       </template>
     </q-table>
@@ -48,7 +89,9 @@
 <script>
 // composition api
 import { ref, onMounted } from "vue";
-import { fetchWindowsUpdates } from "@/api/winupdates";
+import { fetchWindowsUpdates, populateWindowsUpdates, updateAllWindowsUpdates } from "@/api/winupdates";
+import { notifySuccess } from "@/utils/notify";
+import { truncateText } from "@/utils/format";
 
 // ui components
 import ExportTableBtn from "@/components/ui/ExportTableBtn.vue";
@@ -99,7 +142,7 @@ const columns = [
 ];
 
 export default {
-  name: "UpdateModal",
+  name: "WindowsUpdateManager",
   components: {
     ExportTableBtn,
   },
@@ -111,16 +154,45 @@ export default {
     },
   },
   setup(props) {
-    // set main debug log functionality
     const windowsUpdates = ref([]);
 
-    const loading = ref(false);
     const filter = ref("");
+    const pagination = ref({
+      rowsPerPage: 0,
+      sortBy: "kb",
+      descending: false,
+    });
+    const loading = ref(false);
 
     async function getWindowsUpdates() {
       loading.value = true;
       try {
         windowsUpdates.value = await fetchWindowsUpdates();
+        notifySuccess("Fetched and updated Windows Updates");
+      } catch (e) {
+        console.error(e);
+      }
+      loading.value = false;
+    }
+
+    async function updateWindowsUpdates() {
+      loading.value = true;
+      try {
+        populateWindowsUpdates().then(() => {
+          getWindowsUpdates();
+        });
+      } catch (e) {
+        console.error(e);
+      }
+      loading.value = false;
+    }
+
+    async function editWindowsUpdate(kb, action) {
+      loading.value = true;
+      try {
+        const result = await updateAllWindowsUpdates(kb, { action: action });
+        notifySuccess(result);
+        updateWindowsUpdates();
       } catch (e) {
         console.error(e);
       }
@@ -137,12 +209,17 @@ export default {
       windowsUpdates,
       loading,
       filter,
+      pagination,
 
       // non-reactive data
       columns,
 
       // methods
       getWindowsUpdates,
+      updateWindowsUpdates,
+      editWindowsUpdate,
+      notifySuccess,
+      truncateText,
     };
   },
 };

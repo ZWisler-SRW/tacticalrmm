@@ -13,6 +13,7 @@ from tacticalrmm.permissions import _has_perm_on_agent
 from .models import WinUpdate
 from .models import WinUpdateManager
 from .permissions import AgentWinUpdatePerms
+from django.core import serializers
 from .serializers import WinUpdateSerializer, WinUpdateManagerSerializer
 
 
@@ -32,7 +33,7 @@ class RetrieveWindowsUpdates(APIView):
 
     # list all windows updates that are pending
     def get(self, request):
-        updates = WinUpdateManager.objects.all()
+        updates = WinUpdateManager.objects.all().order_by("-severity", "-kb")
         ctx = {"agents_pending": 0, "agents_installed": 0}
         serializer = WinUpdateManagerSerializer(updates, many=True, context=ctx)
         return Response(serializer.data)
@@ -41,11 +42,30 @@ class PopulateWindowsUpdates(APIView):
     permission_classes = [IsAuthenticated, AgentWinUpdatePerms]
 
     # populate the windows update manager table to include the KB and report against it
-    def get(self, request):
-        updates = WinUpdateManager.objects.all()
-        ctx = {"agents_pending": 0, "agents_installed": 0}
-        serializer = WinUpdateManagerSerializer(updates, many=True, context=ctx)
-        return Response(serializer.data)
+    def patch(self, request):
+        updates = WinUpdate.objects.all()
+
+        for winupd in serializers.serialize("python", WinUpdate.objects.all()):
+            obj,created = WinUpdateManager.objects.update_or_create(kb=winupd["fields"]["kb"],
+                defaults={
+                    "kb": winupd["fields"]["kb"], 
+                    "name": winupd["fields"]["title"],
+                    "guid": winupd["fields"]["guid"],
+                    "status": winupd["fields"]["action"],
+                    "severity": winupd["fields"]["severity"]
+                }
+            )
+            
+        return Response(f"Windows updates populated for the Update Manager")
+
+class EditAllWindowsUpdates(APIView):
+    permission_classes = [IsAuthenticated, AgentWinUpdatePerms]
+
+    # change approval status of update
+    def put(self, request, kb):
+        action = request.data["action"]
+        WinUpdate.objects.filter(kb=kb).update(action=action)
+        return Response(f"Windows update {kb} was changed to {action}")
 
 class ScanWindowsUpdates(APIView):
     permission_classes = [IsAuthenticated, AgentWinUpdatePerms]

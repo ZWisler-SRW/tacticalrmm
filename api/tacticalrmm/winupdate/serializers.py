@@ -23,11 +23,11 @@ class WinUpdateManagerSerializer(serializers.ModelSerializer):
     agents_installed = serializers.SerializerMethodField()
 
     def get_agents_pending(self, obj):
-        obj.agents_pending = WinUpdate.objects.filter(kb=obj.kb).count()
+        obj.agents_pending = WinUpdate.objects.filter(kb=obj.kb, installed=False).count()
         return obj.agents_pending
 
     def get_agents_installed(self, obj):
-        obj.agents_installed = WinUpdate.objects.filter(kb=obj.kb).count()
+        obj.agents_installed = WinUpdate.objects.filter(kb=obj.kb, installed=True).count()
         return obj.agents_installed
 
     class Meta:
