@@ -34,7 +34,7 @@ class RetrieveWindowsUpdates(APIView):
     # list all windows updates that are pending
     def get(self, request):
         updates = WinUpdateManager.objects.all().order_by("-severity", "-kb")
-        ctx = {"agents_pending": 0, "agents_installed": 0}
+        ctx = {"agents_pending": 0, "agents_installed": 0, "update_data": []}
         serializer = WinUpdateManagerSerializer(updates, many=True, context=ctx)
         return Response(serializer.data)
 
@@ -64,7 +64,8 @@ class EditAllWindowsUpdates(APIView):
     # change approval status of update
     def put(self, request, kb):
         action = request.data["action"]
-        WinUpdate.objects.filter(kb=kb).update(action=action)
+        WinUpdate.objects.filter(kb=kb, action="nothing").update(action=action)
+        WinUpdateManager.objects.filter(kb=kb).update(status=action)
         return Response(f"Windows update {kb} was changed to {action}")
 
 class ScanWindowsUpdates(APIView):

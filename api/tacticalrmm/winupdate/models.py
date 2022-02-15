@@ -88,7 +88,7 @@ class WinUpdate(models.Model):
 
 class WinUpdateManager(models.Model):
     kb = models.CharField(max_length=100, null=False, blank=False)
-    name = models.CharField(max_length=100, null=False, blank=False)
+    name = models.CharField(max_length=255, null=False, blank=False)
     guid = models.CharField(max_length=255, null=True, blank=True)
     status = models.TextField(null=True, blank=True)
     severity = models.CharField(max_length=255, null=True, blank=True)

@@ -15,13 +15,13 @@
       :style="{ 'max-height': tabHeight }"
       :rows="windowsUpdates"
       :columns="columns"
-      v-model:pagination="pagination"
       :filter="filter"
       row-key="kb"
       binary-state-sort
+      :pagination="pagination"
+      :rows-per-page-options="[25, 50, 100]"
       virtual-scroll
       :loading="loading"
-      :rows-per-page-options="[0]"
       no-data-label="No Windows Updates"
     >
       <template v-slot:top>
@@ -77,9 +77,22 @@
           </q-td>
           <q-td>{{ !props.row.severity ? "Not Defined" : props.row.severity }}</q-td>
           <q-td>{{ props.row.kb }}</q-td>
-          <q-td>{{ truncateText(props.row.name, 75) }}</q-td>
-          <q-td>{{ props.row.agents_pending }}</q-td>
-          <q-td>{{ props.row.agents_installed }}</q-td>
+          <!--<q-td>{{ truncateText(props.row.name, 75) }}</q-td>-->
+          <q-td @click="showUpdateDetails(props.row)">
+            <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
+              truncateText(props.row.name, 75)
+            }}</span>
+          </q-td>
+          <q-td @click="showAgentsPendingList(props.row)">
+            <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
+              props.row.agents_pending
+            }}</span>
+          </q-td>
+          <q-td @click="showAgentsInstalledList(props.row)">
+            <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
+              props.row.agents_installed
+            }}</span>
+          </q-td>
         </q-tr>
       </template>
     </q-table>
@@ -89,6 +102,7 @@
 <script>
 // composition api
 import { ref, onMounted } from "vue";
+import { useQuasar } from "quasar";
 import { fetchWindowsUpdates, populateWindowsUpdates, updateAllWindowsUpdates } from "@/api/winupdates";
 import { notifySuccess } from "@/utils/notify";
 import { truncateText } from "@/utils/format";
@@ -161,8 +175,11 @@ export default {
       rowsPerPage: 0,
       sortBy: "kb",
       descending: false,
+      rowsPerPage: 25,
     });
     const loading = ref(false);
+
+    const $q = useQuasar();
 
     async function getWindowsUpdates() {
       loading.value = true;
@@ -192,12 +209,41 @@ export default {
       try {
         const result = await updateAllWindowsUpdates(kb, { action: action });
         notifySuccess(result);
-        updateWindowsUpdates();
+        getWindowsUpdates();
       } catch (e) {
         console.error(e);
       }
       loading.value = false;
     }
+
+    function showUpdateDetails(update) {
+      update = update.update_data;
+      let support_urls = "";
+      update.more_info_urls.forEach(u => {
+        support_urls += `<a href='${u}' target='_blank'>${u}</a><br/>`;
+      });
+      let cats = update.categories.join(", ");
+      $q.dialog({
+        title: update.title,
+        message:
+          `<b>Categories:</b> ${cats}<br/><br/>` +
+          "<b>Description</b><br/>" +
+          update.description.split(". ").join(".<br />") +
+          `<br/><br/><b>Support Urls</b><br/>${support_urls}`,
+        html: true,
+        fullWidth: true,
+      });
+    }
+
+    function showAgentsPendingList() {
+      $q.dialog({
+        title: "Agents Pending The Update",
+        message: `List of agents`,
+        html: true,
+        fullWidth: true,
+      });
+    }
+    function showAgentsInstalledList() {}
 
     // vue component hooks
     onMounted(() => {
@@ -218,6 +264,9 @@ export default {
       getWindowsUpdates,
       updateWindowsUpdates,
       editWindowsUpdate,
+      showUpdateDetails,
+      showAgentsPendingList,
+      showAgentsInstalledList,
       notifySuccess,
       truncateText,
     };
