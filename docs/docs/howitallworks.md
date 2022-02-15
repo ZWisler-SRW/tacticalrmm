@@ -1,5 +1,16 @@
 # How It All Works
 
+## Understanding TRMM
+
+Anything you configure: scripts, tasks, patching etc is queued and scheduled on the server to do something. 
+Everything that is queued, happens immediately when agents are online.
+The agent gets a nats command, server tells it to do xyz and it does it.
+
+When agents are not connected to the server nothing happens. The windows task scheduler says do x at some time, what it's asked to do is get x command from the server. If server is offline, nothing happens.
+If an agent comes online, every x interval (windows update, pending tasks etc) check and see is there something for me to do that I missed while I was offline. When that time occurs (eg agent sees if it needs to update itself at 35mins past every hr https://wh1te909.github.io/tacticalrmm/update_agents/ ) it'll get requested on the online agent.
+
+That's the simplified general rule for everything TRMM.
+
 [![Network Design](images/TacticalRMM-Network.png)](images/TacticalRMM-Network.png)
 
 Still need graphics for
@@ -51,7 +62,7 @@ Nginx is the web server for the `rmm`, `api`, and `mesh` domains. All sites redi
 
     === ":material-web: `rmm.example.com`"
 
-        This serves the frontend website that you intereact with.
+        This serves the frontend website that you interact with.
 
         - Config: `/etc/nginx/sites-enabled/frontend.conf`
         - root: `/var/www/rmm/dist`
@@ -80,8 +91,8 @@ Nginx is the web server for the `rmm`, `api`, and `mesh` domains. All sites redi
 
         - Config: `/etc/nginx/sites-enabled/meshcentral.conf`
         - Upstream: `http://127.0.0.1:4430/`
-        - Access log: `/var/log/nginx/access.log` (uses deafult)
-        - Error log: `/var/log/nginx/error.log` (uses deafult)
+        - Access log: `/var/log/nginx/access.log` (uses default)
+        - Error log: `/var/log/nginx/error.log` (uses default)
         - TLS certificate: `/etc/letsencrypt/live/example.com/fullchain.pem`
 
     === ":material-web: default"
@@ -90,8 +101,8 @@ Nginx is the web server for the `rmm`, `api`, and `mesh` domains. All sites redi
 
         - Config: `/etc/nginx/sites-enabled/default`
         - root: `/var/www/rmm/dist`
-        - Access log: `/var/log/nginx/access.log` (uses deafult)
-        - Error log: `/var/log/nginx/error.log` (uses deafult)
+        - Access log: `/var/log/nginx/access.log` (uses default)
+        - Error log: `/var/log/nginx/error.log` (uses default)
 
 ???+ note "systemd config"
 
@@ -119,7 +130,7 @@ Nginx is the web server for the `rmm`, `api`, and `mesh` domains. All sites redi
 
 #### Tactical RMM (Django uWSGI) service
 
-Built on the Django framework, the Tactical RMM service is the heart of system by serving the API for the frontend and agents.
+Built on the Django framework, the Tactical RMM service is the heart of the system by serving the API for the frontend and agents.
 
 ???+ note "systemd config"
 
@@ -452,7 +463,87 @@ Files create `c:\Windows\temp\Tacticalxxxx\` folder for install (and log files)
 
 ***
 
-### Agent Recovery
+### Agent Debugging
+
+You can temporarily log to screen, or log to file
+
+???+ note "Debugging Options"
+
+    === ":material-math-log: Manual One Time"
+
+        Stop the services
+
+        ```cmd
+        net stop tacticalagent
+        net stop tacticalrpc
+        ```
+
+        Then run either Agent:
+
+        Run the tacticalagent service manually with debug logging:
+
+        ```cmd
+        "C:\Program Files\TacticalAgent\tacticalrmm.exe" -m winagentsvc -log debug -logto stdout
+        ```
+
+        Run the tacticalrpc service manually with debug logging:
+
+        ```cmd
+        "C:\Program Files\TacticalAgent\tacticalrmm.exe" -m rpc -log debug -logto stdout
+        ```
+
+    === ":material-math-log: Log debug to file"
+
+        TacticalAgent
+        
+        Stop the service
+
+        ```cmd
+        net stop tacticalagent
+        ```
+
+        Edit the service: `TacticalAgent`
+
+        ```cmd
+        cd "c:\Program Files\TacticalAgent"
+        nssm.exe edit tacticalagent
+        ```
+
+        Add options `-m winagentsvc -log debug`
+
+        TacticalAgent: Start the service
+        ```cmd
+        net start tacticalagent
+        ```
+
+        It will debug log to `"C:\Program Files\TacticalAgent\agent.log"`
+
+        **AND/OR**
+
+        Tacticalrpc
+        
+        Stop the service
+
+        ```cmd
+        net stop tacticalrpc
+        ```
+
+        Edit the service: `Tacticalrpc`
+
+        ```cmd
+        cd "c:\Program Files\Tacticalrpc"
+        nssm.exe edit tacticalrpc
+        ```
+
+        Add options `-m rpc -log debug`
+
+        Tacticalrpc: Start the service
+        ```cmd
+        net start tacticalrpc
+        ```
+
+        It will debug log to `"C:\Program Files\TacticalAgent\agent.log"`
+
 
 #### Mesh Agent Recovery
 

@@ -86,6 +86,16 @@ class WinUpdate(models.Model):
     def __str__(self):
         return f"{self.agent.hostname} {self.kb}"
 
+class WinUpdateManager(models.Model):
+    kb = models.CharField(max_length=100, null=False, blank=False)
+    name = models.CharField(max_length=100, null=False, blank=False)
+    guid = models.CharField(max_length=255, null=True, blank=True)
+    status = models.TextField(null=True, blank=True)
+    severity = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return self.kb
+
 
 class WinUpdatePolicy(BaseAuditModel):
     agent = models.ForeignKey(
