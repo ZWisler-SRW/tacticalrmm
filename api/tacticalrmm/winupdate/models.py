@@ -80,6 +80,7 @@ class WinUpdate(models.Model):
     action = models.CharField(
         max_length=100, choices=PATCH_ACTION_CHOICES, default="nothing"
     )
+    allow_action_change = models.BooleanField(default=True)
     result = models.CharField(max_length=255, default="n/a")
     date_installed = models.DateTimeField(null=True, blank=True)
 

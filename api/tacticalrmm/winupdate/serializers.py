@@ -1,7 +1,7 @@
 import pytz
 from rest_framework import serializers
 
-from .models import WinUpdate, WinUpdatePolicy, WinUpdateManager
+from .models import Agent, WinUpdate, WinUpdatePolicy, WinUpdateManager
 
 
 class WinUpdateSerializer(serializers.ModelSerializer):
@@ -19,30 +19,19 @@ class WinUpdateSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class WinUpdateManagerSerializer(serializers.ModelSerializer):
-    #pending_agents = serializers.SerializerMethodField()
-    #installed_agents = serializers.SerializerMethodField()
-    agents_pending = serializers.SerializerMethodField()
-    agents_installed = serializers.SerializerMethodField()
     update_data = serializers.SerializerMethodField()
 
     def get_update_data(self, obj):
-        update = WinUpdate.objects.filter(kb=obj.kb)[:1].get()
+        update = WinUpdate.objects.filter(kb=obj.kb)
         obj.data = {
-            "description": update.description,
-            "categories": update.categories,
-            "more_info_urls": update.more_info_urls,
-            "support_url": update.support_url
+            "description": update.first().description,
+            "categories": update.first().categories,
+            "more_info_urls": update.first().more_info_urls,
+            "support_url": update.first().support_url,
+            "pending_agents": Agent.objects.filter(id__in=update.filter(installed=False).values_list('agent', flat=True)).values_list('hostname', flat=True),
+            "installed_agents": Agent.objects.filter(id__in=update.filter(installed=True).values_list('agent', flat=True)).values_list('hostname', flat=True)
         }
         return obj.data
-
-    # Get Agent Counts
-    def get_agents_pending(self, obj):
-        obj.agents_pending = WinUpdate.objects.filter(kb=obj.kb, installed=False).count()
-        return obj.agents_pending
-
-    def get_agents_installed(self, obj):
-        obj.agents_installed = WinUpdate.objects.filter(kb=obj.kb, installed=True).count()
-        return obj.agents_installed
 
     class Meta:
         model = WinUpdateManager

@@ -16,7 +16,6 @@
       :rows="windowsUpdates"
       :columns="columns"
       :filter="filter"
-      row-key="kb"
       binary-state-sort
       :pagination="pagination"
       :rows-per-page-options="[25, 50, 100]"
@@ -78,19 +77,19 @@
           <q-td>{{ !props.row.severity ? "Not Defined" : props.row.severity }}</q-td>
           <q-td>{{ props.row.kb }}</q-td>
           <!--<q-td>{{ truncateText(props.row.name, 75) }}</q-td>-->
-          <q-td @click="showUpdateDetails(props.row)">
+          <q-td @click="showUpdateDetails(props.row.update_data)">
             <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
               truncateText(props.row.name, 75)
             }}</span>
           </q-td>
-          <q-td @click="showAgentsPendingList(props.row)">
+          <q-td @click="showAgentsPendingList(props.row.update_data)">
             <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
-              props.row.agents_pending
+              props.row.update_data.pending_agents.length
             }}</span>
           </q-td>
-          <q-td @click="showAgentsInstalledList(props.row)">
+          <q-td @click="showAgentsInstalledList(props.row.update_data)">
             <span style="cursor: pointer; text-decoration: underline" class="text-primary">{{
-              props.row.agents_installed
+              props.row.update_data.installed_agents.length
             }}</span>
           </q-td>
         </q-tr>
@@ -172,9 +171,8 @@ export default {
 
     const filter = ref("");
     const pagination = ref({
-      rowsPerPage: 0,
       sortBy: "kb",
-      descending: false,
+      descending: true,
       rowsPerPage: 25,
     });
     const loading = ref(false);
@@ -217,7 +215,6 @@ export default {
     }
 
     function showUpdateDetails(update) {
-      update = update.update_data;
       let support_urls = "";
       update.more_info_urls.forEach(u => {
         support_urls += `<a href='${u}' target='_blank'>${u}</a><br/>`;
@@ -235,15 +232,23 @@ export default {
       });
     }
 
-    function showAgentsPendingList() {
+    function showAgentsPendingList(update) {
       $q.dialog({
         title: "Agents Pending The Update",
-        message: `List of agents`,
+        message: update.pending_agents.length > 0 ? update.pending_agents.join("<br />") : "No Agents To Display",
         html: true,
         fullWidth: true,
       });
     }
-    function showAgentsInstalledList() {}
+
+    function showAgentsInstalledList(update) {
+      $q.dialog({
+        title: "Agents With The Update Installed",
+        message: update.installed_agents.length > 0 ? update.installed_agents.join("<br />") : "No Agents To Display",
+        html: true,
+        fullWidth: true,
+      });
+    }
 
     // vue component hooks
     onMounted(() => {

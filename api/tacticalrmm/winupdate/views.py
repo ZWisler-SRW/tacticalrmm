@@ -46,16 +46,15 @@ class PopulateWindowsUpdates(APIView):
         updates = WinUpdate.objects.all()
 
         for winupd in serializers.serialize("python", WinUpdate.objects.all()):
-            obj,created = WinUpdateManager.objects.update_or_create(kb=winupd["fields"]["kb"],
+            obj, created = WinUpdateManager.objects.get_or_create(kb=winupd["fields"]["kb"],
                 defaults={
                     "kb": winupd["fields"]["kb"], 
                     "name": winupd["fields"]["title"],
                     "guid": winupd["fields"]["guid"],
-                    "status": winupd["fields"]["action"],
+                    "status": "nothing",
                     "severity": winupd["fields"]["severity"]
                 }
-            )
-            
+            )    
         return Response(f"Windows updates populated for the Update Manager")
 
 class EditAllWindowsUpdates(APIView):
@@ -64,7 +63,7 @@ class EditAllWindowsUpdates(APIView):
     # change approval status of update
     def put(self, request, kb):
         action = request.data["action"]
-        WinUpdate.objects.filter(kb=kb, action="nothing").update(action=action)
+        WinUpdate.objects.filter(kb=kb, allow_action_change=True).update(action=action)
         WinUpdateManager.objects.filter(kb=kb).update(status=action)
         return Response(f"Windows update {kb} was changed to {action}")
 
@@ -103,6 +102,8 @@ class EditWindowsUpdates(APIView):
 
         if not _has_perm_on_agent(request.user, update.agent.agent_id):
             raise PermissionDenied()
+
+        update.allow_action_change = False
 
         serializer = WinUpdateSerializer(
             instance=update, data=request.data, partial=True
