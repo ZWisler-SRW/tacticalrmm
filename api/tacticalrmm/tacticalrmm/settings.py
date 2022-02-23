@@ -94,6 +94,7 @@ INSTALLED_APPS = [
     "apiv3",
     "clients",
     "agents",
+    "groups",
     "checks",
     "services",
     "winupdate",

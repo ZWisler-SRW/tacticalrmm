@@ -25,7 +25,6 @@ from software.models import InstalledSoftware
 from tacticalrmm.utils import notify_error, reload_nats
 from winupdate.models import WinUpdate, WinUpdatePolicy
 
-
 class CheckIn(APIView):
 
     authentication_classes = [TokenAuthentication]

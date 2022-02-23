@@ -93,6 +93,27 @@ def _has_perm_on_site(user, site_id: int):
 
     return False
 
+def _has_perm_on_group(user, group_id: int):
+    from groups.models import Groups
+
+    role = user.role
+    if user.is_superuser or (role and getattr(role, "is_superuser")):
+        return True
+
+    # make sure non-superusers with empty roles aren't permitted
+    elif not role:
+        return False
+    
+    group = get_object_or_404(id, id=group_id)
+    can_view_groups = role.can_view_groups.all() if role else None
+
+    if not can_view_groups:
+        return True
+
+    elif can_view_groups and group in can_view_groups:
+        return True
+
+    return False
 
 def _audit_log_filter(user) -> Q:
     role = user.role

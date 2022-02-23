@@ -3,7 +3,7 @@ from django.db import models
 
 class PermissionQuerySet(models.QuerySet):
 
-    # filters queryset based on permissions. Works different for Agent, Client, and Site
+    # filters queryset based on permissions. Works different for Agent, Client, Site, and Group
     def filter_by_role(self, user):
 
         role = user.role
@@ -14,9 +14,11 @@ class PermissionQuerySet(models.QuerySet):
 
         can_view_clients = role.can_view_clients.all() if role else None
         can_view_sites = role.can_view_sites.all() if role else None
+        can_view_groups = role.can_view_sites.all() if role else None
 
         clients_queryset = models.Q()
         sites_queryset = models.Q()
+        groups_queryset = models.Q()
         agent_queryset = models.Q()
         model_name = self.model._meta.label.split(".")[1]
 
@@ -28,7 +30,10 @@ class PermissionQuerySet(models.QuerySet):
             if can_view_sites:
                 sites_queryset = models.Q(site__in=can_view_sites)
 
-            return self.filter(clients_queryset | sites_queryset)
+            if can_view_groups:
+                groups_queryset = models.Q(groups__contains=[can_view_groups]) 
+
+            return self.filter(clients_queryset | sites_queryset | groups_queryset)
 
         # checks which sites and clients the user has access to and filters clients and sites
         elif model_name == "Client" and (can_view_clients or can_view_sites):
@@ -53,6 +58,12 @@ class PermissionQuerySet(models.QuerySet):
                 )
 
             return self.filter(clients_queryset | sites_queryset)
+        
+        elif model_name == "Group" and (can_view_groups):
+            if can_view_groups:
+                groups_queryset = models.Q(groups__contains=[can_view_groups])
+
+            return self.filter(clients_queryset)
 
         elif model_name == "Alert":
 
@@ -93,5 +104,7 @@ class PermissionQuerySet(models.QuerySet):
                 clients_queryset = models.Q(agent__site__client__in=can_view_clients)
             if can_view_sites:
                 sites_queryset = models.Q(agent__site__in=can_view_sites)
+            if can_view_groups:
+                groups_queryset = models.Q(groups__contains=[can_view_groups])
 
-            return self.filter(clients_queryset | sites_queryset | agent_queryset)
+            return self.filter(clients_queryset | sites_queryset | groups_queryset | agent_queryset)

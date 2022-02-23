@@ -6,7 +6,7 @@
           <q-menu>
             <q-list dense style="min-width: 100px">
               <q-item clickable>
-                <q-item-section>Add</q-item-section>
+                <q-item-section>New</q-item-section>
                 <q-item-section side>
                   <q-icon name="keyboard_arrow_right" />
                 </q-item-section>
@@ -17,6 +17,9 @@
                     </q-item>
                     <q-item clickable v-close-popup @click="showAddSiteModal">
                       <q-item-section>Site</q-item-section>
+                    </q-item>
+                    <q-item clickable v-close-popup @click="showAddGroupModal">
+                      <q-item-section>Group</q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -55,6 +58,13 @@
               <q-item clickable v-close-popup @click="showDebugLog">
                 <q-item-section>Debug Log</q-item-section>
               </q-item>
+              <!--
+              <q-separator />
+
+              <q-item clickable v-close-popup @click="showServerStatus">
+                <q-item-section>Server Status</q-item-section>
+              </q-item>
+              -->
             </q-list>
           </q-menu>
         </q-btn>
@@ -201,10 +211,12 @@ import PendingActions from "@/components/logs/PendingActions";
 import ClientsManager from "@/components/clients/ClientsManager";
 import ClientsForm from "@/components/clients/ClientsForm";
 import SitesForm from "@/components/clients/SitesForm";
+import GroupForm from "@/components/modals/groups/GroupsForm";
 import UpdateAgents from "@/components/modals/agents/UpdateAgents";
 import ScriptManager from "@/components/scripts/ScriptManager";
 import UpdateManager from "@/components/automation/UpdateManager";
 import EditCoreSettings from "@/components/modals/coresettings/EditCoreSettings";
+import ServerStatus from "@/components/ServerStatus";
 import AlertsManager from "@/components/AlertsManager";
 import AutomationManager from "@/components/automation/AutomationManager";
 import AdminManager from "@/components/AdminManager";
@@ -295,6 +307,13 @@ export default {
         })
         .onOk(() => this.$store.dispatch("loadTree"));
     },
+    showAddGroupModal() {
+      this.$q
+        .dialog({
+          component: GroupForm,
+        })
+        .onOk(() => this.$store.dispatch("loadGroupTree"));
+    },
     showPermissionsManager() {
       this.$q.dialog({
         component: PermissionsManager,
@@ -335,6 +354,23 @@ export default {
         component: DialogWrapper,
         componentProps: {
           vuecomponent: DebugLog,
+          noCard: true,
+          componentProps: {
+            modal: true,
+          },
+          dialogProps: {
+            maximized: true,
+            ["transition-show"]: "slide-up",
+            ["transition-hide"]: "slide-down",
+          },
+        },
+      });
+    },
+    showServerStatus() {
+      this.$q.dialog({
+        component: DialogWrapper,
+        componentProps: {
+          vuecomponent: ServerStatus,
           noCard: true,
           componentProps: {
             modal: true,

@@ -1,4 +1,5 @@
 import os
+import shutil
 import re
 
 from django.conf import settings
@@ -78,6 +79,28 @@ class GetEditCoreSettings(APIView):
 def version(request):
     return Response(settings.APP_VER)
 
+@api_view()
+def server_info(request):
+
+    # Get memory
+    tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+
+    # Get CPU
+    cpu_perct = str(round(float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline()),2))
+
+    # Get Disk Space (Of root path)
+    total, used, free = shutil.disk_usage("/")
+
+    return Response({
+        "hostname": os.uname()[1],
+        "memory_used": used_m,
+        "memory_available": free_m,
+        "total_memory": tot_m,
+        "cpu_utilization": cpu_perct,
+        "disk_used": used // (2**30),
+        "disk_free": free  // (2**30),
+        "disk_total": total // (2**30)
+    })
 
 @api_view()
 def dashboard_info(request):

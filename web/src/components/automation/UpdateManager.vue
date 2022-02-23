@@ -136,7 +136,7 @@ const columns = [
     label: "Name",
     field: "name",
     align: "left",
-    sortable: true,
+    sortable: false,
   },
   {
     name: "agents_pending",

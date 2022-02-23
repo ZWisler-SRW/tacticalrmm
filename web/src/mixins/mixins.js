@@ -124,6 +124,9 @@ export default {
     formatSiteOptions(sites) {
       return sites.map(site => ({ label: site.name, value: site.id }));
     },
+    formatGroupOptions(groups) {
+      return groups.map(group => ({ label: group.name, value: group.id }))
+    },
     capitalize(string) {
       return string[0].toUpperCase() + string.substring(1);
     },

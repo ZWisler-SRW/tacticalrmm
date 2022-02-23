@@ -9,9 +9,12 @@ export default function () {
         username: localStorage.getItem("user_name") || null,
         token: localStorage.getItem("access_token") || null,
         tree: [],
+        groupTree: [],
         agents: [],
         treeReady: false,
+        groupTreeReady: false,
         selectedTree: "",
+        selectedGroupTree: "",
         selectedRow: null,
         agentTableLoading: false,
         needrefresh: false,
@@ -23,6 +26,7 @@ export default function () {
         agentUrlAction: null,
         defaultAgentTblTab: "server",
         clientTreeSort: "alphafail",
+        groupTreeSort: "alphafail",
         clientTreeSplitter: 20,
         noCodeSign: false,
         hosted: false,
@@ -47,6 +51,9 @@ export default function () {
       allClientsSelected(state) {
         return !state.selectedTree;
       },
+      allGroupsSelected(state) {
+        return !state.selectedTree;
+      },
     },
     mutations: {
       AGENT_TABLE_LOADING(state, visible) {
@@ -66,6 +73,10 @@ export default function () {
       loadTree(state, treebar) {
         state.tree = treebar;
         state.treeReady = true;
+      },
+      loadGroupTree(state, treebar) {
+        state.groupTree = treebar;
+        state.groupTreeReady = true;
       },
       destroySubTable(state) {
         state.selectedRow = null;
@@ -143,6 +154,9 @@ export default function () {
         }
         else if (state.selectedTree.includes("Site")) {
           dispatch("loadAgents", `?site=${state.selectedTree.split("|")[1]}`)
+        }
+        else if (state.selectedTree.includes("Group")) {
+          dispatch("loadAgents", `?group=${state.selectedTree.split("|")[1]}`)
         } else {
           console.error("refreshDashboard has incorrect parameters")
           return
@@ -151,6 +165,7 @@ export default function () {
         if (clearTreeSelected) commit("destroySubTable")
 
         dispatch("loadTree");
+        dispatch("loadGroupTree");
         dispatch("getDashInfo", false);
       },
       async loadAgents(context, params = null) {
@@ -242,6 +257,28 @@ export default function () {
         })
           .catch(e => {
             state.treeReady = true
+          });
+      },
+      loadGroupTree({ commit, state }) {
+        axios.get("/groups/").then(r => {
+          let output = [];
+          for (let group of r.data) {
+            let groupNode = {
+              label: group.name,
+              id: group.id,
+              raw: `Group|${group.id}`,
+              header: "root",
+              icon: "mdi-account-group-outline",
+              group: group
+            }
+            output.push(groupNode);
+          }
+
+          commit("loadGroupTree", output);
+
+        })
+          .catch(e => {
+            state.groupTreeReady = true
           });
       },
       checkVer(context) {

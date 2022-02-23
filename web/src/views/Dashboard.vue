@@ -7,128 +7,215 @@
           <q-spinner size="40px" color="primary" />
         </div>
         <div v-else class="q-pa-sm q-gutter-sm scroll" style="height: 85vh">
-          <q-list dense class="rounded-borders">
-            <q-item clickable v-ripple :active="allClientsActive" @click="clearTreeSelected">
-              <q-item-section avatar>
-                <q-icon name="fas fa-home" />
-              </q-item-section>
-              <q-item-section>All Clients</q-item-section>
-            </q-item>
-            <q-tree
-              ref="tree"
-              :nodes="clientsTree"
-              node-key="raw"
-              no-nodes-label="No Clients"
-              selected-color="primary"
-              v-model:selected="selectedTree"
-              @update:selected="$store.dispatch('refreshDashboard')"
+          <q-card>
+            <q-tabs
+              v-model="menu_tab"
+              dense
+              class="text-grey"
+              active-color="primary"
+              indicator-color="primary"
+              align="justify"
+              narrow-indicator
             >
-              <template v-slot:default-header="props">
-                <div class="row items-center">
-                  <q-icon :name="props.node.icon" :color="props.node.color" class="q-mr-sm" />
-                  <div>
-                    {{ props.node.label }}
-                    <q-tooltip :delay="600">
-                      ID: {{ props.node.id }}<br />
-                      Agent Count:
-                      {{ props.node.children ? props.node.client.agent_count : props.node.site.agent_count }}
-                    </q-tooltip>
-                  </div>
+              <q-tab name="agents" label="Agents" />
+              <q-tab name="groups" label="Groups" />
+            </q-tabs>
 
-                  <q-menu context-menu>
-                    <q-list dense style="min-width: 200px">
-                      <q-item clickable v-close-popup @click="showEditModal(props.node)">
-                        <q-item-section side>
-                          <q-icon name="edit" />
-                        </q-item-section>
-                        <q-item-section>Edit</q-item-section>
-                      </q-item>
-                      <q-item clickable v-close-popup @click="showDeleteModal(props.node)">
-                        <q-item-section side>
-                          <q-icon name="delete" />
-                        </q-item-section>
-                        <q-item-section>Delete</q-item-section>
-                      </q-item>
+            <q-separator />
 
-                      <q-separator></q-separator>
+            <q-tab-panels v-model="menu_tab" animated>
+              <q-tab-panel name="agents">
+                <q-list dense class="rounded-borders">
+                  <q-item clickable v-ripple :active="allClientsActive" @click="clearTreeSelected">
+                    <q-item-section avatar>
+                      <q-icon name="fas fa-home" />
+                    </q-item-section>
+                    <q-item-section>All Clients</q-item-section>
+                  </q-item>
+                  <q-tree
+                    ref="tree"
+                    :nodes="clientsTree"
+                    node-key="raw"
+                    no-nodes-label="No Clients"
+                    selected-color="primary"
+                    v-model:selected="selectedTree"
+                    @update:selected="$store.dispatch('refreshDashboard')"
+                  >
+                    <template v-slot:default-header="props">
+                      <div class="row items-center">
+                        <q-icon :name="props.node.icon" :color="props.node.color" class="q-mr-sm" />
+                        <div>
+                          {{ props.node.label }}
+                          <q-tooltip :delay="600">
+                            ID: {{ props.node.id }}<br />
+                            Agent Count:
+                            {{ props.node.children ? props.node.client.agent_count : props.node.site.agent_count }}
+                          </q-tooltip>
+                        </div>
 
-                      <q-item v-if="props.node.children" clickable v-close-popup @click="showAddSiteModal(props.node)">
-                        <q-item-section side>
-                          <q-icon name="add" />
-                        </q-item-section>
-                        <q-item-section>Add Site</q-item-section>
-                      </q-item>
+                        <q-menu context-menu>
+                          <q-list dense style="min-width: 200px">
+                            <q-item clickable v-close-popup @click="showEditModal(props.node)">
+                              <q-item-section side>
+                                <q-icon name="edit" />
+                              </q-item-section>
+                              <q-item-section>Edit</q-item-section>
+                            </q-item>
+                            <q-item clickable v-close-popup @click="showDeleteModal(props.node)">
+                              <q-item-section side>
+                                <q-icon name="delete" />
+                              </q-item-section>
+                              <q-item-section>Delete</q-item-section>
+                            </q-item>
 
-                      <q-item clickable v-close-popup @click="showToggleMaintenance(props.node)">
-                        <q-item-section side>
-                          <q-icon name="construction" />
-                        </q-item-section>
-                        <q-item-section>{{
-                          props.node.color === "green" ? "Disable Maintenance Mode" : "Enable Maintenance Mode"
-                        }}</q-item-section>
-                      </q-item>
+                            <q-separator></q-separator>
 
-                      <q-item
-                        v-if="props.node.children === undefined"
-                        clickable
-                        v-close-popup
-                        @click="showInstallAgent(props.node)"
-                      >
-                        <q-item-section side>
-                          <q-icon name="cloud_download" />
-                        </q-item-section>
-                        <q-item-section>Install Agent</q-item-section>
-                      </q-item>
-
-                      <q-item clickable v-close-popup @click="showPolicyAdd(props.node)">
-                        <q-item-section side>
-                          <q-icon name="policy" />
-                        </q-item-section>
-                        <q-item-section>Assign Automation Policy</q-item-section>
-                      </q-item>
-
-                      <q-item clickable v-close-popup @click="showAlertTemplateAdd(props.node)">
-                        <q-item-section side>
-                          <q-icon name="error" />
-                        </q-item-section>
-                        <q-item-section>Assign Alert Template</q-item-section>
-                      </q-item>
-
-                      <q-item clickable v-ripple @click="getURLActions">
-                        <q-item-section side>
-                          <q-icon name="open_in_new" />
-                        </q-item-section>
-                        <q-item-section>Run URL Action</q-item-section>
-                        <q-item-section side>
-                          <q-icon name="keyboard_arrow_right" />
-                        </q-item-section>
-                        <q-menu auto-close anchor="top end" self="top start">
-                          <q-list>
                             <q-item
-                              v-for="action in urlActions"
-                              :key="action.id"
-                              dense
+                              v-if="props.node.children"
                               clickable
                               v-close-popup
-                              @click="runURLAction(props.node.id, action.id, props.node.children ? 'client' : 'site')"
+                              @click="showAddSiteModal(props.node)"
                             >
-                              {{ action.name }}
+                              <q-item-section side>
+                                <q-icon name="add" />
+                              </q-item-section>
+                              <q-item-section>Add Site</q-item-section>
+                            </q-item>
+
+                            <q-item clickable v-close-popup @click="showToggleMaintenance(props.node)">
+                              <q-item-section side>
+                                <q-icon name="construction" />
+                              </q-item-section>
+                              <q-item-section>{{
+                                props.node.color === "green" ? "Disable Maintenance Mode" : "Enable Maintenance Mode"
+                              }}</q-item-section>
+                            </q-item>
+
+                            <q-item
+                              v-if="props.node.children === undefined"
+                              clickable
+                              v-close-popup
+                              @click="showInstallAgent(props.node)"
+                            >
+                              <q-item-section side>
+                                <q-icon name="cloud_download" />
+                              </q-item-section>
+                              <q-item-section>Install Agent</q-item-section>
+                            </q-item>
+
+                            <q-item clickable v-close-popup @click="showPolicyAdd(props.node)">
+                              <q-item-section side>
+                                <q-icon name="policy" />
+                              </q-item-section>
+                              <q-item-section>Assign Automation Policy</q-item-section>
+                            </q-item>
+
+                            <q-item clickable v-close-popup @click="showAlertTemplateAdd(props.node)">
+                              <q-item-section side>
+                                <q-icon name="error" />
+                              </q-item-section>
+                              <q-item-section>Assign Alert Template</q-item-section>
+                            </q-item>
+
+                            <q-item clickable v-ripple @click="getURLActions">
+                              <q-item-section side>
+                                <q-icon name="open_in_new" />
+                              </q-item-section>
+                              <q-item-section>Run URL Action</q-item-section>
+                              <q-item-section side>
+                                <q-icon name="keyboard_arrow_right" />
+                              </q-item-section>
+                              <q-menu auto-close anchor="top end" self="top start">
+                                <q-list>
+                                  <q-item
+                                    v-for="action in urlActions"
+                                    :key="action.id"
+                                    dense
+                                    clickable
+                                    v-close-popup
+                                    @click="
+                                      runURLAction(props.node.id, action.id, props.node.children ? 'client' : 'site')
+                                    "
+                                  >
+                                    {{ action.name }}
+                                  </q-item>
+                                </q-list>
+                              </q-menu>
+                            </q-item>
+
+                            <q-separator></q-separator>
+
+                            <q-item clickable v-close-popup>
+                              <q-item-section>Close</q-item-section>
                             </q-item>
                           </q-list>
                         </q-menu>
-                      </q-item>
+                      </div>
+                    </template>
+                  </q-tree>
+                </q-list>
+              </q-tab-panel>
 
-                      <q-separator></q-separator>
+              <q-tab-panel name="groups">
+                <q-list dense class="rounded-borders">
+                  <q-item clickable v-ripple :active="allGroupsActive" @click="clearTreeSelected">
+                    <q-item-section avatar>
+                      <q-icon name="fas fa-home" />
+                    </q-item-section>
+                    <q-item-section>All Groups</q-item-section>
+                  </q-item>
+                  <q-tree
+                    ref="tree"
+                    :nodes="groupsTree"
+                    node-key="raw"
+                    no-nodes-label="No Groups"
+                    selected-color="primary"
+                    v-model:selected="selectedTree"
+                    @update:selected="$store.dispatch('refreshDashboard')"
+                  >
+                    <template v-slot:default-header="props">
+                      <div class="row items-center">
+                        <q-icon :name="props.node.icon" :color="props.node.color" class="q-mr-sm" />
+                        <div>
+                          {{ props.node.label }}
+                          <q-tooltip :delay="600">
+                            Group ID: {{ props.node.id }}<br />
+                            Agent Count: {{ props.node.group.agents }}
+                          </q-tooltip>
+                        </div>
 
-                      <q-item clickable v-close-popup>
-                        <q-item-section>Close</q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </div>
-              </template>
-            </q-tree>
-          </q-list>
+                        <q-menu context-menu>
+                          <q-list dense style="min-width: 200px">
+                            <q-item clickable v-close-popup @click="showGroupEditModal(props.node)">
+                              <q-item-section side>
+                                <q-icon name="edit" />
+                              </q-item-section>
+                              <q-item-section>Rename</q-item-section>
+                            </q-item>
+                            <q-item clickable v-close-popup @click="showGroupDeleteModal(props.node)">
+                              <q-item-section side>
+                                <q-icon name="delete" />
+                              </q-item-section>
+                              <q-item-section>Delete</q-item-section>
+                            </q-item>
+
+                            <q-separator></q-separator>
+
+                            <q-item clickable v-close-popup @click="showGroupPropertiesModal(props.node)">
+                              <q-item-section side>
+                                <q-icon name="settings" />
+                              </q-item-section>
+                              <q-item-section>Properties</q-item-section>
+                            </q-item>
+                          </q-list>
+                        </q-menu>
+                      </div>
+                    </template>
+                  </q-tree>
+                </q-list>
+              </q-tab-panel>
+            </q-tab-panels>
+          </q-card>
         </div>
       </template>
 
@@ -316,11 +403,15 @@ import SubTableTabs from "@/components/SubTableTabs";
 import PolicyAdd from "@/components/automation/modals/PolicyAdd";
 import ClientsForm from "@/components/clients/ClientsForm";
 import SitesForm from "@/components/clients/SitesForm";
+import GroupsForm from "@/components/modals/groups/GroupsForm";
+import GroupPropertiesForm from "@/components/modals/groups/GroupPropertiesForm";
 import DeleteClient from "@/components/clients/DeleteClient";
 import InstallAgent from "@/components/modals/agents/InstallAgent";
 import AlertTemplateAdd from "@/components/modals/alerts/AlertTemplateAdd";
 
+import { notifySuccess, notifyError } from "@/utils/notify";
 import { removeClient, removeSite } from "@/api/clients";
+import { deleteGroup } from "@/api/groups";
 
 export default {
   name: "Dashboard",
@@ -347,6 +438,7 @@ export default {
       sitePk: null,
       innerModel: (this.$q.screen.height - 82) / 2,
       search: "",
+      menu_tab: "agents",
       filterTextLength: 0,
       filterAvailability: "all",
       filterPatchesPending: false,
@@ -488,6 +580,7 @@ export default {
     getTree() {
       this.$store.dispatch("loadAgents");
       this.$store.dispatch("loadTree");
+      this.$store.dispatch("loadGroupTree");
     },
     clearTreeSelected() {
       if (this.clearSearchWhenSwitching) this.clearFilter();
@@ -560,6 +653,42 @@ export default {
             this.$q.loading.hide();
           });
       }
+    },
+    showGroupEditModal(node) {
+      this.$q
+        .dialog({
+          component: GroupsForm,
+          componentProps: node,
+        })
+        .onOk(() => this.$store.dispatch("loadGroupTree"));
+    },
+    showGroupPropertiesModal(node) {
+      this.$q
+        .dialog({
+          component: GroupPropertiesForm,
+          componentProps: node,
+        })
+        .onOk(() => this.$store.dispatch("loadGroupTree"));
+    },
+    showGroupDeleteModal(node) {
+      this.$q
+        .dialog({
+          title: "Are you sure?",
+          message: `Delete group: ${node.label}.`,
+          cancel: true,
+          ok: { label: "Delete", color: "negative" },
+        })
+        .onOk(async () => {
+          this.$q.loading.show();
+          try {
+            const result = await deleteGroup(node.id);
+            result.status ? notifySuccess(result.message) : notifyError(result.message);
+            this.$store.dispatch("loadGroupTree");
+          } catch (e) {
+            console.error(e);
+          }
+          this.$q.loading.hide();
+        });
     },
     showInstallAgent(node) {
       this.sitePk = node.id;
@@ -682,7 +811,9 @@ export default {
   computed: {
     ...mapState({
       clientsTree: state => state.tree,
+      groupsTree: state => state.groupTree,
       treeReady: state => state.treeReady,
+      groupTreeReady: state => state.groupTreeReady,
       clearSearchWhenSwitching: state => state.clearSearchWhenSwitching,
       agents: state => state.agents,
     }),
@@ -713,6 +844,9 @@ export default {
       },
     },
     allClientsActive() {
+      return this.selectedTree === "";
+    },
+    allGroupsActive() {
       return this.selectedTree === "";
     },
     filteredAgents() {

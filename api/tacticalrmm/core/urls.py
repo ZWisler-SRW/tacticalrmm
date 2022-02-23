@@ -8,6 +8,7 @@ urlpatterns = [
     path("version/", views.version),
     path("emailtest/", views.email_test),
     path("dashinfo/", views.dashboard_info),
+    path("serverinfo/", views.server_info),
     path("servermaintenance/", views.server_maintenance),
     path("customfields/", views.GetAddCustomFields.as_view()),
     path("customfields/<int:pk>/", views.GetUpdateDeleteCustomFields.as_view()),

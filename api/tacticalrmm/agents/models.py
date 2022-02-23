@@ -82,6 +82,12 @@ class Agent(BaseAuditModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    groups = ArrayField(
+        models.IntegerField(null=False, blank=False),
+        null=False,
+        blank=True,
+        default=list,
+    )
     policy = models.ForeignKey(
         "automation.Policy",
         related_name="agents",

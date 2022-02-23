@@ -7,6 +7,15 @@
       </q-item-section>
       <q-item-section>Edit {{ agent.hostname }}</q-item-section>
     </q-item>
+    <q-item clickable v-close-popup>
+      <q-item-section side>
+        <q-icon size="xs" name="fas fa-share-square" />
+      </q-item-section>
+      <q-item-section v-if="!filter(agent.groups)" @click="showAddAgentToGroup(agent)">Send To Group</q-item-section>
+      <q-item-section v-else @click="showRemoveAgentFromGroup(agent, get_group(agent.groups))"
+        >Remove From Group</q-item-section
+      >
+    </q-item>
     <!-- agent pending actions -->
     <q-item clickable v-close-popup @click="showPendingActionsModal(agent)">
       <q-item-section side>
@@ -199,6 +208,8 @@ import {
 import { runAgentUpdateScan, runAgentUpdateInstall } from "@/api/winupdates";
 import { runAgentChecks } from "@/api/checks";
 import { fetchScripts } from "@/api/scripts";
+import { removeGroupMember } from "@/api/groups";
+
 import { notifySuccess, notifyWarning, notifyError } from "@/utils/notify";
 
 // ui imports
@@ -207,6 +218,7 @@ import AgentRecovery from "@/components/modals/agents/AgentRecovery";
 import PolicyAdd from "@/components/automation/modals/PolicyAdd";
 import RebootLater from "@/components/modals/agents/RebootLater";
 import EditAgent from "@/components/modals/agents/EditAgent";
+import AddAgentGroup from "@/components/modals/groups/AddAgentGroup";
 import SendCommand from "@/components/modals/agents/SendCommand";
 import RunScript from "@/components/modals/agents/RunScript";
 
@@ -232,6 +244,34 @@ export default {
           agent_id: agent_id,
         },
       }).onOk(refreshDashboard);
+    }
+
+    function showAddAgentToGroup(agent_id) {
+      $q.dialog({
+        component: AddAgentGroup,
+        componentProps: {
+          agent: agent_id,
+        },
+      }).onOk(refreshDashboard);
+    }
+
+    function showRemoveAgentFromGroup(agent, group_id) {
+      $q.dialog({
+        title: "Are you sure?",
+        message: `Remove ${agent.hostname} from the group?`,
+        cancel: true,
+        ok: { label: "Remove", color: "negative" },
+      }).onOk(async () => {
+        $q.loading.show();
+        try {
+          const result = await removeGroupMember(agent.agent_id, { group_id: group_id });
+          result.status ? notifySuccess(result.message) : notifyError(result.message);
+          store.dispatch("refreshDashboard");
+        } catch (e) {
+          console.error(e);
+        }
+        $q.loading.hide();
+      });
     }
 
     function showPendingActionsModal(agent) {
@@ -444,6 +484,18 @@ export default {
       });
     }
 
+    function filter(groups) {
+      if (store.state.selectedTree.split("|")[0] == "Client" || store.state.selectedTree.split("|")[0] == "Site") {
+        return false;
+      } else {
+        return groups.filter(n => n === parseInt(store.state.selectedTree.split("|")[1])).length === 0 ? false : true;
+      }
+    }
+
+    function get_group(groups) {
+      return groups.filter(n => n === parseInt(store.state.selectedTree.split("|")[1]))[0];
+    }
+
     return {
       // reactive data
       urlActions,
@@ -451,6 +503,8 @@ export default {
 
       // methods
       showEditAgent,
+      showAddAgentToGroup,
+      showRemoveAgentFromGroup,
       showPendingActionsModal,
       runTakeControl,
       runRemoteBackground,
@@ -468,6 +522,8 @@ export default {
       showPolicyAdd,
       showAgentRecovery,
       pingAgent,
+      filter,
+      get_group,
     };
   },
 };

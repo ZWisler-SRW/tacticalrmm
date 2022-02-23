@@ -33,6 +33,7 @@ from tacticalrmm.permissions import (
     _has_perm_on_agent,
     _has_perm_on_client,
     _has_perm_on_site,
+    _has_perm_on_group,
 )
 
 from .models import Agent, AgentCustomField, Note, RecoveryAction, AgentHistory
@@ -62,7 +63,6 @@ from .serializers import (
 )
 from .tasks import run_script_email_results_task, send_agent_update_task
 
-
 class GetAgents(APIView):
     permission_classes = [IsAuthenticated, AgentPerms]
 
@@ -71,6 +71,8 @@ class GetAgents(APIView):
             filter = Q(site_id=request.query_params["site"])
         elif "client" in request.query_params.keys():
             filter = Q(site__client_id=request.query_params["client"])
+        elif "group" in request.query_params.keys():
+            filter = Q(groups__contains=[request.query_params["group"]])
         else:
             filter = Q()
 
@@ -97,10 +99,9 @@ class GetAgents(APIView):
                 Agent.objects.filter_by_role(request.user)  # type: ignore
                 .select_related("site")
                 .filter(filter)
-                .only("agent_id", "hostname", "site")
+                .only("agent_id", "hostname", "site", "groups")
             )
             serializer = AgentHostnameSerializer(agents, many=True)
-
         return Response(serializer.data)
 
 
@@ -801,6 +802,13 @@ def bulk(request):
             raise PermissionDenied()
         q = Agent.objects.filter_by_role(request.user).filter(
             site_id=request.data["site"]
+        )
+    
+    elif request.data["target"] == "group":
+        if not _has_perm_on_group(request.user, request.data["group"]):
+            raise PermissionDenied()
+        q = Agent.objects.filter_by_role(request.user).filter(
+            groups__contains=[request.data["group"]]
         )
 
     elif request.data["target"] == "agents":

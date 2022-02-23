@@ -99,6 +99,7 @@ class AgentTableSerializer(serializers.ModelSerializer):
             "hostname",
             "site_name",
             "client_name",
+            "groups",
             "monitoring_type",
             "description",
             "needs_reboot",

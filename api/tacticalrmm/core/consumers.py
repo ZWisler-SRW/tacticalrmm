@@ -6,7 +6,6 @@ from django.contrib.auth.models import AnonymousUser
 
 from agents.models import Agent
 
-
 class DashInfo(AsyncJsonWebsocketConsumer):
     async def connect(self):
 

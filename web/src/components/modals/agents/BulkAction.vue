@@ -43,6 +43,16 @@
             filterable
           />
           <tactical-dropdown
+            v-else-if="state.target === 'group'"
+            :rules="[val => !!val || '*Required']"
+            v-model="state.group"
+            :options="groupOptions"
+            label="Select Group"
+            outlined
+            mapOptions
+            filterable
+          />
+          <tactical-dropdown
             v-else-if="state.target === 'agents'"
             :rules="[val => !!val || '*Required']"
             v-model="state.agents"
@@ -158,6 +168,7 @@ import { useDialogPluginComponent } from "quasar";
 import { useScriptDropdown } from "@/composables/scripts";
 import { useAgentDropdown } from "@/composables/agents";
 import { useClientDropdown, useSiteDropdown } from "@/composables/clients";
+import { useGroupDropdown } from "@/composables/groups";
 import { runBulkAction } from "@/api/agents";
 import { notifySuccess } from "@/utils/notify";
 
@@ -174,6 +185,7 @@ const monTypeOptions = [
 const targetOptions = [
   { label: "Client", value: "client" },
   { label: "Site", value: "site" },
+  { label: "Group", value: "group" },
   { label: "Selected Agents", value: "agents" },
   { label: "All", value: "all" },
 ];
@@ -208,6 +220,7 @@ export default {
     const { agents, agentOptions, getAgentOptions } = useAgentDropdown();
     const { site, siteOptions, getSiteOptions } = useSiteDropdown();
     const { client, clientOptions, getClientOptions } = useClientDropdown();
+    const { group, groupOptions, getGroupOptions } = useGroupDropdown();
 
     // bulk action logic
     const state = ref({
@@ -220,6 +233,7 @@ export default {
       offlineAgents: false,
       client,
       site,
+      group,
       agents,
       script,
       timeout: defaultTimeout,
@@ -232,6 +246,7 @@ export default {
       (newValue, oldValue) => {
         client.value = null;
         site.value = null;
+        group.value = null;
         agents.value = [];
       }
     );
@@ -264,6 +279,7 @@ export default {
       getAgentOptions();
       getSiteOptions();
       getClientOptions();
+      getGroupOptions();
       if (props.mode === "script") getScriptOptions(showCommunityScripts.value);
     });
 
@@ -273,6 +289,7 @@ export default {
       agentOptions,
       clientOptions,
       siteOptions,
+      groupOptions,
       scriptOptions,
       loading,
 

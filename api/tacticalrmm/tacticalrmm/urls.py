@@ -26,6 +26,7 @@ urlpatterns = [
     path("api/v3/", include("apiv3.urls")),
     path("clients/", include("clients.urls")),
     path("agents/", include("agents.urls")),
+    path("groups/", include("groups.urls")),
     path("checks/", include("checks.urls")),
     path("services/", include("services.urls")),
     path("winupdate/", include("winupdate.urls")),

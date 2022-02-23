@@ -136,6 +136,10 @@ export function formatSiteOptions(data, flat = false) {
   return options
 }
 
+export function formatGroupOptions(data, flat = false) {
+  return _formatOptions(data, { label: "name", flat: flat })
+}
+
 export function formatUserOptions(data, flat = false) {
   return _formatOptions(data, { label: "username", flat: flat })
 }

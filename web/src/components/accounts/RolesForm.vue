@@ -59,6 +59,29 @@
               <q-checkbox v-model="localRole.can_recover_agents" label="Recover Agents" />
             </div>
           </q-card-section>
+
+          <div class="text-subtitle2">Groups</div>
+          <q-separator />
+          <q-card-section class="row">
+            <div class="q-gutter-sm">
+              <q-checkbox v-model="localRole.can_list_groups" label="List Agent Groups" />
+              <q-checkbox v-model="localRole.can_manage_groups" label="Manage Agent Groups" />
+            </div>
+          </q-card-section>
+
+          <q-card-section class="row">
+            <tactical-dropdown
+              class="col-6"
+              label="Allowed Groups"
+              :options="groupOptions"
+              v-model="localRole.can_view_groups"
+              hint="Empty means all groups are allowed"
+              outlined
+              mapOptions
+              multiple
+            />
+          </q-card-section>
+
           <div class="text-subtitle2">Core</div>
           <q-separator />
           <q-card-section class="row">
@@ -215,6 +238,7 @@ import { ref, watch } from "vue";
 import { useDialogPluginComponent } from "quasar";
 import { saveRole, editRole } from "@/api/accounts";
 import { useClientDropdown, useSiteDropdown } from "@/composables/clients";
+import { useGroupDropdown } from "@/composables/groups";
 import { notifySuccess } from "@/utils/notify";
 
 // ui imports
@@ -232,6 +256,7 @@ export default {
     // dropdown setup
     const { clientOptions } = useClientDropdown(true);
     const { siteOptions } = useSiteDropdown(true);
+    const { groupOptions } = useGroupDropdown(true);
 
     const role = props.role
       ? ref(Object.assign({}, props.role))
@@ -307,6 +332,10 @@ export default {
           can_manage_alerttemplates: false,
           // update perms
           can_manage_winupdates: false,
+          // group perms
+          can_list_groups: false,
+          can_manage_groups: false,
+          can_view_groups: [],
           // account perms
           can_list_accounts: false,
           can_manage_accounts: false,
@@ -347,6 +376,7 @@ export default {
       loading,
       clientOptions,
       siteOptions,
+      groupOptions,
 
       onSubmit,
 
